@@ -32,11 +32,14 @@ class IrPluginTest {
     val result = compile(
       sourceFile = SourceFile.kotlin(
         "main.kt", """
-fun main() {
-  println(debug())
-}
+fun evalAdd(a: Int, b: Int): Int = evalMinus(a, b)
 
-fun debug() = "Hello, World!"
+fun evalMinus(a: Int, b: Int): Int = evalAdd(a, b)
+
+fun main() {
+  val a = 5
+  println(evalAdd(a, 1))
+}
 """
       )
     )
@@ -59,5 +62,7 @@ fun compile(
   sourceFile: SourceFile,
   plugin: CompilerPluginRegistrar = TemplateCompilerRegistrar(),
 ): JvmCompilationResult {
-  return compile(listOf(sourceFile), plugin)
+  return compile(listOf(sourceFile), plugin).also {
+    it.generatedFiles
+  }
 }

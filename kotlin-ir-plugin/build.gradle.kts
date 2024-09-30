@@ -2,10 +2,11 @@ plugins {
   kotlin("jvm")
   kotlin("kapt")
   id("com.github.gmazzo.buildconfig")
+  id("maven-publish")
 }
 
 dependencies {
-  compileOnly("org.jetbrains.kotlin:kotlin-compiler-embeddable")
+  implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable")
 
   kapt("com.google.auto.service:auto-service:1.1.1")
   compileOnly("com.google.auto.service:auto-service-annotations:1.1.1")
@@ -18,4 +19,13 @@ dependencies {
 buildConfig {
   packageName(group.toString())
   buildConfigField("String", "KOTLIN_PLUGIN_ID", "\"${rootProject.extra["kotlin_plugin_id"]}\"")
+}
+
+publishing {
+  publications {
+    register("unshaded", MavenPublication::class) {
+      artifactId = "kotlin-ir-plugin" // or "${project.name}" for dynamic artifact ID
+      from(components["java"])
+    }
+  }
 }

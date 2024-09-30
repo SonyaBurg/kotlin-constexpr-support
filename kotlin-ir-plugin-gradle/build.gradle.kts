@@ -2,7 +2,12 @@ plugins {
   id("java-gradle-plugin")
   kotlin("jvm")
   id("com.github.gmazzo.buildconfig")
+  id("com.gradle.plugin-publish")
 }
+
+apply(plugin = "maven-publish")
+apply(plugin = "org.jetbrains.kotlin.jvm")
+apply(plugin = "org.jetbrains.kotlin.kapt")
 
 dependencies {
   implementation(kotlin("gradle-plugin-api"))
@@ -24,6 +29,13 @@ gradlePlugin {
       displayName = "Kotlin Ir Plugin Template"
       description = "Kotlin Ir Plugin Template"
       implementationClass = "com.bnorm.template.TemplateGradlePlugin"
+    }
+  }
+}
+
+publishing {
+  publications {
+    create("pluginMaven", MavenPublication::class) {
     }
   }
 }
