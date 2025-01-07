@@ -1,5 +1,5 @@
 buildscript {
-  extra["kotlin_plugin_id"] = "com.bnorm.template.kotlin-ir-plugin"
+  extra["kotlin_plugin_id"] = "com.redisco.constexpr.kotlin-ir-plugin"
 }
 
 plugins {
@@ -10,7 +10,7 @@ plugins {
 }
 
 allprojects {
-  group = "com.bnorm.template"
+  group = "com.redisco.constexpr"
   version = "0.1.0-SNAPSHOT"
 }
 

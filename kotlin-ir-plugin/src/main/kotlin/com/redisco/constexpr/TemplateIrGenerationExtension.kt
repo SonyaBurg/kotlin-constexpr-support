@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.bnorm.template
+package com.redisco.constexpr
 
 import org.jetbrains.kotlin.backend.common.FileLoweringPass
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
@@ -25,11 +25,22 @@ import org.jetbrains.kotlin.ir.backend.js.utils.valueArguments
 import org.jetbrains.kotlin.ir.declarations.IrFile
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 import org.jetbrains.kotlin.ir.declarations.IrVariable
-import org.jetbrains.kotlin.ir.expressions.*
+import org.jetbrains.kotlin.ir.expressions.IrConst
+import org.jetbrains.kotlin.ir.expressions.IrExpression
+import org.jetbrains.kotlin.ir.expressions.IrFunctionAccessExpression
+import org.jetbrains.kotlin.ir.expressions.IrGetValue
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformer
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
+import kotlin.collections.MutableMap
+import kotlin.collections.map
+import kotlin.collections.mapNotNull
+import kotlin.collections.mutableMapOf
+import kotlin.collections.set
+import kotlin.collections.toMap
+import kotlin.collections.toMutableMap
+import kotlin.collections.zip
 
 class TemplateIrGenerationExtension : IrGenerationExtension {
   override fun generate(moduleFragment: IrModuleFragment, pluginContext: IrPluginContext) {
@@ -40,10 +51,14 @@ class TemplateIrGenerationExtension : IrGenerationExtension {
   }
 }
 
-data class Container(val valueMap: MutableMap<String, IrConst<*>> = mutableMapOf(), var fromEval: Boolean = false, val parentTransformer: AccessorCallTransformer? = null)
+data class Container(
+  val valueMap: MutableMap<String, IrConst<*>> = mutableMapOf(),
+  var fromEval: Boolean = false,
+  val parentTransformer: AccessorCallTransformer? = null
+)
 
 class AccessorCallTransformer(
-  val context: IrPluginContext, val dataContainer: Container
+  val context: IrPluginContext, private val dataContainer: Container
 ) : IrElementTransformer<Container>, FileLoweringPass {
 
   override fun lower(irFile: IrFile) {
@@ -69,13 +84,13 @@ class AccessorCallTransformer(
     if (expression.symbol.owner.name.asString().startsWith("eval")) {
       val evalTransformer = EvalTransformer()
       data.fromEval = true
-      val transformedValueArguments = expression.valueArguments.mapNotNull { it?.transform(this, data) as? IrConst<*>}
+      val transformedValueArguments = expression.valueArguments.mapNotNull { it?.transform(this, data) as? IrConst<*> }
       if (transformedValueArguments.size == expression.valueArguments.size) {
         val keys = expression.symbol.owner.valueParameters.map { it.name.asString() }
         val container = Container(valueMap = keys.zip(transformedValueArguments).toMap().toMutableMap(), true, this)
         val result = try {
           expression.symbol.owner.body?.accept(evalTransformer, container)
-        } catch(e: StackOverflowError) {
+        } catch (e: StackOverflowError) {
           null
         }
         return result ?: super.visitFunctionAccess(expression, data)

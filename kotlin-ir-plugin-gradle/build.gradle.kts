@@ -26,9 +26,9 @@ gradlePlugin {
   plugins {
     create("kotlinIrPluginTemplate") {
       id = rootProject.extra["kotlin_plugin_id"] as String
-      displayName = "Kotlin Ir Plugin Template"
-      description = "Kotlin Ir Plugin Template"
-      implementationClass = "com.bnorm.template.TemplateGradlePlugin"
+      displayName = "Kotlin Ir Plugin Constant Evaluation"
+      description = "Kotlin Ir Plugin Constant Evaluation"
+      implementationClass = "com.redisco.constexpr.TemplateGradlePlugin"
     }
   }
 }

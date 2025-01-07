@@ -16,25 +16,31 @@
 
 @file:OptIn(ExperimentalCompilerApi::class)
 
-package com.bnorm.template
+package com.redisco.constexpr
 
 import com.tschuchort.compiletesting.JvmCompilationResult
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
 import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar
-import kotlin.test.assertEquals
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.junit.Test
+import kotlin.test.assertEquals
 
 class IrPluginTest {
   @Test
-  fun `IR plugin success`() {
+  fun `Test constexpr`() {
     val result = compile(
       sourceFile = SourceFile.kotlin(
         "main.kt", """
-fun evalAdd(a: Int, b: Int): Int = evalMinus(a, b)
-
-fun evalMinus(a: Int, b: Int): Int = evalAdd(a, b)
+fun evalAdd(a: Int, b: Int): Int {
+  var c = 0
+  while (c < 10) {
+    c += a
+    if (c > b) break
+    c += 1
+  }
+  return c
+}
 
 fun main() {
   val a = 5

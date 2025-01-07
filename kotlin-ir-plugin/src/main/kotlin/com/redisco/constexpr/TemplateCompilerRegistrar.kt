@@ -16,7 +16,7 @@
 
 @file:OptIn(ExperimentalCompilerApi::class)
 
-package com.bnorm.template
+package com.redisco.constexpr
 
 import com.google.auto.service.AutoService
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension

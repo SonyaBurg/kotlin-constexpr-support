@@ -1,4 +1,4 @@
-package com.bnorm.template.operators
+package com.redisco.constexpr.operators
 
 import org.jetbrains.kotlin.ir.expressions.IrConst
 import org.jetbrains.kotlin.ir.types.IrType

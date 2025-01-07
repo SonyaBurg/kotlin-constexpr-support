@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.bnorm.template
+package com.redisco.constexpr
 
 import org.gradle.api.Project
 import org.gradle.api.provider.Provider
@@ -42,12 +42,8 @@ class TemplateGradlePlugin : KotlinCompilerPluginSupportPlugin {
     kotlinCompilation: KotlinCompilation<*>
   ): Provider<List<SubpluginOption>> {
     val project = kotlinCompilation.target.project
-    val extension = project.extensions.getByType(TemplateGradleExtension::class.java)
     return project.provider {
-      listOf(
-        SubpluginOption(key = "string", value = extension.stringProperty.get()),
-        SubpluginOption(key = "file", value = extension.fileProperty.get().asFile.path),
-      )
+      listOf()
     }
   }
 }

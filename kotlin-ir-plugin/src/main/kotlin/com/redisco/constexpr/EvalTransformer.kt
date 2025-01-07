@@ -1,17 +1,22 @@
-package com.bnorm.template
+package com.redisco.constexpr
 
-import com.bnorm.template.operators.*
+import com.redisco.constexpr.operators.*
 import org.jetbrains.kotlin.backend.jvm.ir.receiverAndArgs
 import org.jetbrains.kotlin.builtins.PrimitiveType
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.declarations.IrVariable
 import org.jetbrains.kotlin.ir.expressions.*
-import org.jetbrains.kotlin.ir.types.*
+import org.jetbrains.kotlin.ir.types.getPrimitiveType
+import org.jetbrains.kotlin.ir.types.isString
+import org.jetbrains.kotlin.ir.types.makeNotNull
+import org.jetbrains.kotlin.ir.types.removeAnnotations
 import org.jetbrains.kotlin.ir.util.isConstantLike
 import org.jetbrains.kotlin.ir.util.statements
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitor
 
 class EvalTransformer : IrElementVisitor<IrConst<*>?, Container> {
+  private val loopMap = mutableMapOf<IrLoop, Boolean>()
+
   override fun visitGetValue(expression: IrGetValue, data: Container): IrConst<*>? {
     if (data.valueMap.containsKey(expression.symbol.owner.name.asString())) {
       return data.valueMap[expression.symbol.owner.name.asString()] ?: super.visitGetValue(expression, data)
@@ -43,7 +48,10 @@ class EvalTransformer : IrElementVisitor<IrConst<*>?, Container> {
 
       else -> null
     }
-    return operator?.invoke(expression.type, *constArgs.map { it }.toTypedArray()) ?: super.visitFunctionAccess(expression, data)
+    return operator?.invoke(expression.type, *constArgs.map { it }.toTypedArray()) ?: super.visitFunctionAccess(
+      expression,
+      data
+    )
   }
 
   private fun getIntOperatorIfPossible(name: String) = when (name) {
@@ -85,7 +93,7 @@ class EvalTransformer : IrElementVisitor<IrConst<*>?, Container> {
   }
 
   override fun visitReturn(expression: IrReturn, data: Container): IrConst<*>? {
-    if (!data.fromEval)  {
+    if (!data.fromEval) {
       return super.visitReturn(expression, data)
     }
     val transformed = expression.value.accept(this, data) as? IrExpression
@@ -131,11 +139,29 @@ class EvalTransformer : IrElementVisitor<IrConst<*>?, Container> {
 
   override fun visitConst(expression: IrConst<*>, data: Container): IrConst<*> = expression
 
+  override fun visitBreakContinue(jump: IrBreakContinue, data: Container): IrConst<*>? {
+    if (jump is IrBreak) {
+      loopMap[jump.loop] = true
+    } else if (jump is IrContinue) {
+      loopMap[jump.loop] = false
+    }
+    return null
+  }
+
   override fun visitWhileLoop(loop: IrWhileLoop, data: Container): IrConst<*>? {
     var condition = loop.condition.accept(this, data) ?: return null
     var result: IrConst<*>? = null
-    while (condition.value as? Boolean == true) {
-      result = loop.body?.accept(this, data)
+    outerLoop@ while (condition.value as? Boolean == true) {
+      val body = (loop.body as? IrBlock) ?: return null
+      for (statement in body.statements) {
+        result = statement.accept(this, data)
+        val shouldBreak = loopMap.getOrDefault(loop, null) ?: continue
+        if (shouldBreak) {
+          break@outerLoop
+        } else {
+          break
+        }
+      }
       condition = loop.condition.accept(this, data) ?: return null
     }
     return result
